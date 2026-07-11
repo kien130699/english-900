@@ -1,0 +1,10 @@
+{
+  "name": "English 900 Learning Platform",
+  "short_name": "English 900",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff8ea",
+  "theme_color": "#2457e6",
+  "description": "Học tiếng Anh từ lớp 1 đến IELTS 9.0",
+  "icons": []
+}
