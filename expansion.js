@@ -51,7 +51,7 @@ lessons.forEach(l=>l[5].map(x=>x.split('|')).forEach((v,i,arr)=>{
  const q2=makeChoice('Từ tiếng Anh của “'+v[1]+'” là gì?',v[0],other.map(x=>x[0]),'Đáp án đúng là '+v[0]+'.');
  placementBank.push([q2.q,q2.o.join(','),q2.a,q2.why]);
 }));
-const bank=randomize(placementBank).slice(0,Math.min(500,placementBank.length));
+const bank=randomize(placementBank).slice(0,Math.min(500,placementBank.length));window.e900BankSize=bank.length;
 function newPlacementTest(){tests.splice(0,tests.length,...randomize(bank).slice(0,25));ti=0;testAnswers=[];test()}
 resetTest=newPlacementTest;
 document.querySelector('#test .lead').textContent='Ngân hàng '+bank.length+' câu từ A0 đến C2; mỗi lượt chọn ngẫu nhiên 25 câu và trộn đáp án.';
