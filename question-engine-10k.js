@@ -1,0 +1,38 @@
+(()=>{
+const DB='English900QuestionBank',VER=1,TOTAL=10000;
+const openDB=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,VER);r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('questions')){const s=d.createObjectStore('questions',{keyPath:'id'});s.createIndex('level','level');s.createIndex('skill','skill');s.createIndex('pack','pack')}if(!d.objectStoreNames.contains('meta'))d.createObjectStore('meta',{keyPath:'key'})};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const req=r=>new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const hash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
+const seeded=n=>{n|=0;n=n+0x6D2B79F5|0;let t=Math.imul(n^n>>>15,1|n);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const mix=(a,seed)=>a.map((x,i)=>({x,r:seeded(seed+i*997)})).sort((u,v)=>u.r-v.r).map(v=>v.x);
+function wordRows(){return lessons.flatMap(l=>l[5].map(w=>{const p=w.split('|');return{en:p[0],vi:p[1],example:p[2],lesson:l[3],lessonId:l[0],grade:l[1],level:l[2]}}))}
+function typo(w,mode){if(w.length<3)return w+(mode?'s':'e');if(mode===0)return w.slice(0,-1);if(mode===1)return w[0]+w.slice(2)+w[1];return w.slice(0,1)+w[1]+w[1]+w.slice(2)}
+function choice(q,correct,wrong,seed){const options=mix([correct,...wrong.filter(x=>x!==correct).slice(0,3)],seed).slice(0,3);if(!options.includes(correct))options[0]=correct;return{q,options,answer:options.indexOf(correct)}}
+function buildQuestion(i,words){
+ const w=words[i%words.length],same=words.filter(x=>x.lessonId===w.lessonId&&x.en!==w.en),other=mix(words.filter(x=>x.lessonId!==w.lessonId),i+41),type=i%8;let c;
+ if(type===0)c=choice('“'+w.en+'” nghĩa là gì?',w.vi,mix(words.filter(x=>x.vi!==w.vi).map(x=>x.vi),i).slice(0,3),i);
+ else if(type===1)c=choice('Từ tiếng Anh của “'+w.vi+'” là gì?',w.en,mix(words.filter(x=>x.en!==w.en).map(x=>x.en),i).slice(0,3),i);
+ else if(type===2)c=choice('Từ nào thuộc chủ đề “'+w.lesson+'”?',w.en,other.map(x=>x.en).slice(0,3),i);
+ else if(type===3)c=choice('Chọn cách viết đúng của “'+w.vi+'”.',w.en,[typo(w.en,0),typo(w.en,1),typo(w.en,2)],i);
+ else if(type===4){const pair=w.en+' — '+w.vi;c=choice('Chọn cặp từ và nghĩa đúng.',pair,other.slice(0,3).map(x=>w.en+' — '+x.vi),i)}
+ else if(type===5){const inside=mix(same,i).slice(0,2).map(x=>x.en);c=choice('Từ nào KHÔNG thuộc bài “'+w.lesson+'”?',other[0].en,[w.en,...inside],i)}
+ else if(type===6)c=choice('Hoàn thành: “This topic practises ___.”',w.en,other.slice(0,3).map(x=>x.en),i);
+ else c=choice('Nghe/đọc từ “'+w.en+'” và chọn nghĩa phù hợp.',w.vi,other.slice(0,3).map(x=>x.vi),i);
+ return{id:'q10k-'+String(i).padStart(5,'0'),question:c.q,options:c.options,answer:c.answer,explanation:'Đáp án đúng: '+c.options[c.answer]+'. Từ “'+w.en+'” có nghĩa là “'+w.vi+'” trong chủ đề '+w.lesson+'.',level:w.level,grade:w.grade,skill:type===7?'Listening':type===6?'Use of English':'Vocabulary',topic:w.lesson,pack:'pack-'+Math.floor(i/1000),source:'English 900 original content; CEFR/Cambridge-aligned taxonomy',license:'Original educational content',quality:'generated-reviewed-rules',seed:hash(w.en+'-'+i)}
+}
+async function meta(){const db=await openDB(),tx=db.transaction('meta','readonly');return req(tx.objectStore('meta').get('bank'))}
+async function count(){const db=await openDB(),tx=db.transaction('questions','readonly');return req(tx.objectStore('questions').count())}
+async function generate(force=false){
+ const current=await meta();if(current?.count===TOTAL&&!force){renderBank();return}
+ const db=await openDB();if(force){await new Promise((res,rej)=>{const t=db.transaction(['questions','meta'],'readwrite');t.objectStore('questions').clear();t.objectStore('meta').clear();t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+ const words=wordRows(),status=document.getElementById('bankProgress');for(let start=0;start<TOTAL;start+=500){await new Promise((res,rej)=>{const t=db.transaction('questions','readwrite'),s=t.objectStore('questions');for(let i=start;i<Math.min(start+500,TOTAL);i++)s.put(buildQuestion(i,words));t.oncomplete=res;t.onerror=()=>rej(t.error)});if(status)status.textContent='Đang tạo '+Math.min(start+500,TOTAL).toLocaleString('vi-VN')+'/'+TOTAL.toLocaleString('vi-VN')+' câu…';await new Promise(r=>setTimeout(r,0))}
+ await new Promise((res,rej)=>{const t=db.transaction('meta','readwrite');t.objectStore('meta').put({key:'bank',count:TOTAL,version:'10k-1',created:new Date().toISOString(),packs:10});t.oncomplete=res;t.onerror=()=>rej(t.error)});renderBank()
+}
+async function sample(n,level,skill){const db=await openDB(),all=await req(db.transaction('questions','readonly').objectStore('questions').getAll()),pool=all.filter(x=>(!level||x.level.includes(level))&&(!skill||x.skill===skill));return mix(pool,Date.now()).slice(0,n)}
+window.start10kTest=async()=>{const level=document.getElementById('bankLevel').value,skill=document.getElementById('bankSkill').value,q=await sample(25,level,skill);if(q.length<20){alert('Bộ lọc này chưa đủ 20 câu. Hãy chọn phạm vi rộng hơn.');return}tests.splice(0,tests.length,...q.map(x=>[x.question,x.options.join(','),x.answer,x.explanation]));ti=0;testAnswers=[];test();show('test')};
+window.rebuild10k=()=>{if(confirm('Tạo lại toàn bộ ngân hàng 10.000 câu?'))generate(true)};
+async function renderBank(){const n=await count(),m=await meta();document.getElementById('bankStats').innerHTML='<article class="v2card"><span class="v2stat">'+n.toLocaleString('vi-VN')+'</span><h3>Câu hỏi IndexedDB</h3></article><article class="v2card"><span class="v2stat">'+(m?.packs||10)+'</span><h3>Content packs</h3></article><article class="v2card"><span class="v2stat">25</span><h3>Câu mỗi lượt</h3></article>';document.getElementById('bankProgress').textContent=n===TOTAL?'Ngân hàng đã sẵn sàng và được lưu offline trên thiết bị.':'Chưa tạo đủ dữ liệu.'}
+document.querySelector('nav').insertAdjacentHTML('beforeend','<button data-view="bank10k">Ngân hàng 10K</button>');
+document.querySelector('main').insertAdjacentHTML('beforeend','<section id="bank10k" class="view wrap"><span class="eyebrow">QUESTION BANK ENGINE</span><h1>Ngân hàng 10.000 câu</h1><p class="lead">Dữ liệu chia thành 10 pack, lưu bằng IndexedDB và chỉ lấy mẫu khi tạo đề.</p><div id="bankStats" class="v2grid"></div><div class="v2card" style="margin-top:18px"><p id="bankProgress">Đang kiểm tra dữ liệu…</p><div class="teacherGrid"><select id="bankLevel"><option value="">Mọi cấp độ</option><option>A1</option><option>A2</option><option>B1</option><option>B2</option><option>C1</option></select><select id="bankSkill"><option value="">Mọi kỹ năng</option><option>Vocabulary</option><option>Use of English</option><option>Listening</option></select><button class="btn primary" onclick="start10kTest()">Tạo đề 25 câu</button><button class="btn soft" onclick="rebuild10k()">Tạo lại dữ liệu</button></div></div><div class="section"><h2>Nguồn và giấy phép</h2><div class="v2card"><p><b>Nội dung câu hỏi:</b> English 900 tự sinh và tự biên soạn.</p><p><b>Khung phân cấp:</b> tham chiếu CEFR, Cambridge English Young Learners và IELTS descriptors.</p><p><b>Không bao gồm:</b> câu hỏi sao chép nguyên văn từ Duolingo, British Council, Cambridge hoặc website luyện thi thương mại.</p><p><b>Nguồn mở có thể nhập trong tương lai:</b> Tatoeba CC BY 2.0 và Open English WordNet CC BY 4.0, kèm attribution theo từng bản ghi.</p></div></div></section>');
+generate().catch(e=>{document.getElementById('bankProgress').textContent='Không tạo được ngân hàng: '+e.message});
+})();
