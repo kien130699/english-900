@@ -23,10 +23,10 @@ function buildQuestion(i,words){
 async function meta(){const db=await openDB(),tx=db.transaction('meta','readonly');return req(tx.objectStore('meta').get('bank'))}
 async function count(){const db=await openDB(),tx=db.transaction('questions','readonly');return req(tx.objectStore('questions').count())}
 async function generate(force=false){
- const current=await meta();if(current?.count===TOTAL&&!force){renderBank();return}
+ const current=await meta();if(current?.count===TOTAL&&current?.version==='10k-2'&&!force){renderBank();return}
  const db=await openDB();if(force){await new Promise((res,rej)=>{const t=db.transaction(['questions','meta'],'readwrite');t.objectStore('questions').clear();t.objectStore('meta').clear();t.oncomplete=res;t.onerror=()=>rej(t.error)})}
  const words=wordRows(),status=document.getElementById('bankProgress');for(let start=0;start<TOTAL;start+=500){await new Promise((res,rej)=>{const t=db.transaction('questions','readwrite'),s=t.objectStore('questions');for(let i=start;i<Math.min(start+500,TOTAL);i++)s.put(buildQuestion(i,words));t.oncomplete=res;t.onerror=()=>rej(t.error)});if(status)status.textContent='Đang tạo '+Math.min(start+500,TOTAL).toLocaleString('vi-VN')+'/'+TOTAL.toLocaleString('vi-VN')+' câu…';await new Promise(r=>setTimeout(r,0))}
- await new Promise((res,rej)=>{const t=db.transaction('meta','readwrite');t.objectStore('meta').put({key:'bank',count:TOTAL,version:'10k-1',created:new Date().toISOString(),packs:10});t.oncomplete=res;t.onerror=()=>rej(t.error)});renderBank()
+ await new Promise((res,rej)=>{const t=db.transaction('meta','readwrite');t.objectStore('meta').put({key:'bank',count:TOTAL,version:'10k-2',created:new Date().toISOString(),packs:10});t.oncomplete=res;t.onerror=()=>rej(t.error)});renderBank()
 }
 async function sample(n,level,skill){const db=await openDB(),all=await req(db.transaction('questions','readonly').objectStore('questions').getAll()),pool=all.filter(x=>(!level||x.level.includes(level))&&(!skill||x.skill===skill));return mix(pool,Date.now()).slice(0,n)}
 window.start10kTest=async()=>{const level=document.getElementById('bankLevel').value,skill=document.getElementById('bankSkill').value,q=await sample(25,level,skill);if(q.length<20){alert('Bộ lọc này chưa đủ 20 câu. Hãy chọn phạm vi rộng hơn.');return}tests.splice(0,tests.length,...q.map(x=>[x.question,x.options.join(','),x.answer,x.explanation]));ti=0;testAnswers=[];test();show('test')};
