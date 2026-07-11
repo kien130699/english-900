@@ -7,17 +7,17 @@ const seeded=n=>{n|=0;n=n+0x6D2B79F5|0;let t=Math.imul(n^n>>>15,1|n);t=t+Math.im
 const mix=(a,seed)=>a.map((x,i)=>({x,r:seeded(seed+i*997)})).sort((u,v)=>u.r-v.r).map(v=>v.x);
 function wordRows(){return lessons.flatMap(l=>l[5].map(w=>{const p=w.split('|');return{en:p[0],vi:p[1],example:p[2],lesson:l[3],lessonId:l[0],grade:l[1],level:l[2]}}))}
 function typo(w,mode){if(w.length<3)return w+(mode?'s':'e');if(mode===0)return w.slice(0,-1);if(mode===1)return w[0]+w.slice(2)+w[1];return w.slice(0,1)+w[1]+w[1]+w.slice(2)}
-function choice(q,correct,wrong,seed){const options=mix([correct,...wrong.filter(x=>x!==correct).slice(0,3)],seed).slice(0,3);if(!options.includes(correct))options[0]=correct;return{q,options,answer:options.indexOf(correct)}}
+function choice(q,correct,wrong,seed){const unique=[...new Set(wrong.filter(x=>x!==correct))];const options=mix([correct,...unique.slice(0,3)],seed).slice(0,3);if(!options.includes(correct))options[0]=correct;return{q,options,answer:options.indexOf(correct)}}
 function buildQuestion(i,words){
- const w=words[i%words.length],same=words.filter(x=>x.lessonId===w.lessonId&&x.en!==w.en),other=mix(words.filter(x=>x.lessonId!==w.lessonId),i+41),type=i%8;let c;
- if(type===0)c=choice('“'+w.en+'” nghĩa là gì?',w.vi,mix(words.filter(x=>x.vi!==w.vi).map(x=>x.vi),i).slice(0,3),i);
- else if(type===1)c=choice('Từ tiếng Anh của “'+w.vi+'” là gì?',w.en,mix(words.filter(x=>x.en!==w.en).map(x=>x.en),i).slice(0,3),i);
- else if(type===2)c=choice('Từ nào thuộc chủ đề “'+w.lesson+'”?',w.en,other.map(x=>x.en).slice(0,3),i);
- else if(type===3)c=choice('Chọn cách viết đúng của “'+w.vi+'”.',w.en,[typo(w.en,0),typo(w.en,1),typo(w.en,2)],i);
- else if(type===4){const pair=w.en+' — '+w.vi;c=choice('Chọn cặp từ và nghĩa đúng.',pair,other.slice(0,3).map(x=>w.en+' — '+x.vi),i)}
- else if(type===5){const inside=mix(same,i).slice(0,2).map(x=>x.en);c=choice('Từ nào KHÔNG thuộc bài “'+w.lesson+'”?',other[0].en,[w.en,...inside],i)}
- else if(type===6)c=choice('Hoàn thành: “This topic practises ___.”',w.en,other.slice(0,3).map(x=>x.en),i);
- else c=choice('Nghe/đọc từ “'+w.en+'” và chọn nghĩa phù hợp.',w.vi,other.slice(0,3).map(x=>x.vi),i);
+ const w=words[i%words.length],same=words.filter(x=>x.lessonId===w.lessonId&&x.en!==w.en),other=mix(words.filter(x=>x.lessonId!==w.lessonId),i+41),type=Math.floor(i/words.length)%8,variant=Math.floor(i/(words.length*8))%7,label=['Chọn đáp án','Ôn nhanh','Kiểm tra từ','Thử thách','Củng cố','Nhận diện','Luyện tập'][variant];let c;
+ if(type===0)c=choice(label+': “'+w.en+'” nghĩa là gì?',w.vi,mix(words.filter(x=>x.vi!==w.vi).map(x=>x.vi),i).slice(0,3),i);
+ else if(type===1)c=choice(label+': Từ tiếng Anh của “'+w.vi+'” là gì?',w.en,mix(words.filter(x=>x.en!==w.en).map(x=>x.en),i).slice(0,3),i);
+ else if(type===2)c=choice(label+': Từ nào thuộc chủ đề “'+w.lesson+'”?',w.en,other.map(x=>x.en).slice(0,3),i);
+ else if(type===3)c=choice(label+': Chọn cách viết đúng của “'+w.vi+'”.',w.en,[typo(w.en,0),typo(w.en,1),typo(w.en,2)],i);
+ else if(type===4){const pair=w.en+' — '+w.vi;c=choice(label+': Chọn cặp từ và nghĩa đúng.',pair,other.slice(0,3).map(x=>w.en+' — '+x.vi),i)}
+ else if(type===5){const inside=mix(same,i).slice(0,2).map(x=>x.en);c=choice(label+': Từ nào KHÔNG thuộc bài “'+w.lesson+'”?',other[0].en,[w.en,...inside],i)}
+ else if(type===6)c=choice(label+': Hoàn thành “This topic practises ___.”',w.en,other.slice(0,3).map(x=>x.en),i);
+ else c=choice(label+': Nghe/đọc từ “'+w.en+'” và chọn nghĩa phù hợp.',w.vi,other.slice(0,3).map(x=>x.vi),i);
  return{id:'q10k-'+String(i).padStart(5,'0'),question:c.q,options:c.options,answer:c.answer,explanation:'Đáp án đúng: '+c.options[c.answer]+'. Từ “'+w.en+'” có nghĩa là “'+w.vi+'” trong chủ đề '+w.lesson+'.',level:w.level,grade:w.grade,skill:type===7?'Listening':type===6?'Use of English':'Vocabulary',topic:w.lesson,pack:'pack-'+Math.floor(i/1000),source:'English 900 original content; CEFR/Cambridge-aligned taxonomy',license:'Original educational content',quality:'generated-reviewed-rules',seed:hash(w.en+'-'+i)}
 }
 async function meta(){const db=await openDB(),tx=db.transaction('meta','readonly');return req(tx.objectStore('meta').get('bank'))}
