@@ -1,0 +1,233 @@
+{
+  "version": "2026.07.11",
+  "packs": [
+    {
+      "id": "primary-extra",
+      "name": "Tiểu học mở rộng",
+      "level": "Pre-A1–A2",
+      "lessons": [
+        {
+          "id": "pack-p-1",
+          "grade": "Lớp 1–5",
+          "level": "A1",
+          "title": "At the zoo",
+          "desc": "Động vật và hành động",
+          "words": [
+            [
+              "monkey",
+              "con khỉ"
+            ],
+            [
+              "lion",
+              "sư tử"
+            ],
+            [
+              "jump",
+              "nhảy"
+            ],
+            [
+              "roar",
+              "gầm"
+            ]
+          ]
+        },
+        {
+          "id": "pack-p-2",
+          "grade": "Lớp 1–5",
+          "level": "A2",
+          "title": "My weekend",
+          "desc": "Hoạt động cuối tuần",
+          "words": [
+            [
+              "picnic",
+              "dã ngoại"
+            ],
+            [
+              "museum",
+              "bảo tàng"
+            ],
+            [
+              "visit",
+              "thăm"
+            ],
+            [
+              "relax",
+              "thư giãn"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "secondary-extra",
+      "name": "THCS mở rộng",
+      "level": "A2–B1",
+      "lessons": [
+        {
+          "id": "pack-m-1",
+          "grade": "Lớp 6–9",
+          "level": "A2",
+          "title": "Healthy habits",
+          "desc": "Thói quen lành mạnh",
+          "words": [
+            [
+              "exercise",
+              "tập thể dục"
+            ],
+            [
+              "sleep",
+              "ngủ"
+            ],
+            [
+              "balanced",
+              "cân bằng"
+            ],
+            [
+              "routine",
+              "thói quen"
+            ]
+          ]
+        },
+        {
+          "id": "pack-m-2",
+          "grade": "Lớp 6–9",
+          "level": "B1",
+          "title": "Digital citizenship",
+          "desc": "Công dân số",
+          "words": [
+            [
+              "privacy",
+              "quyền riêng tư"
+            ],
+            [
+              "password",
+              "mật khẩu"
+            ],
+            [
+              "respectful",
+              "tôn trọng"
+            ],
+            [
+              "source",
+              "nguồn"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ielts-extra",
+      "name": "IELTS kỹ năng",
+      "level": "B1–C1",
+      "lessons": [
+        {
+          "id": "pack-i-1",
+          "grade": "Lớp 10–12",
+          "level": "B2",
+          "title": "Reading inference",
+          "desc": "Suy luận từ văn bản",
+          "words": [
+            [
+              "infer",
+              "suy luận"
+            ],
+            [
+              "imply",
+              "ngụ ý"
+            ],
+            [
+              "context",
+              "ngữ cảnh"
+            ],
+            [
+              "evidence",
+              "bằng chứng"
+            ]
+          ]
+        },
+        {
+          "id": "pack-i-2",
+          "grade": "Đại học",
+          "level": "C1",
+          "title": "Critical evaluation",
+          "desc": "Đánh giá học thuật",
+          "words": [
+            [
+              "validity",
+              "tính hợp lệ"
+            ],
+            [
+              "bias",
+              "thiên lệch"
+            ],
+            [
+              "limitation",
+              "hạn chế"
+            ],
+            [
+              "robust",
+              "vững chắc"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "business-extra",
+      "name": "English for Work",
+      "level": "B1–C1",
+      "lessons": [
+        {
+          "id": "pack-b-1",
+          "grade": "Đại học",
+          "level": "B1–B2",
+          "title": "Meetings",
+          "desc": "Điều hành cuộc họp",
+          "words": [
+            [
+              "agenda",
+              "chương trình"
+            ],
+            [
+              "minutes",
+              "biên bản"
+            ],
+            [
+              "action item",
+              "việc cần làm"
+            ],
+            [
+              "deadline",
+              "hạn chót"
+            ]
+          ]
+        },
+        {
+          "id": "pack-b-2",
+          "grade": "Đại học",
+          "level": "C1",
+          "title": "Negotiation",
+          "desc": "Đàm phán chuyên nghiệp",
+          "words": [
+            [
+              "proposal",
+              "đề xuất"
+            ],
+            [
+              "compromise",
+              "thỏa hiệp"
+            ],
+            [
+              "counteroffer",
+              "đề nghị ngược"
+            ],
+            [
+              "agreement",
+              "thỏa thuận"
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}
