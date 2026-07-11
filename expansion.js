@@ -22,4 +22,38 @@ test=function(){const t=tests[ti],o=t[1].split(',');document.getElementById('tes
 pickTest=function(i){if(testAnswers[ti]!==undefined)return;testAnswers[ti]=i;const t=tests[ti],a=t[2],o=t[1].split(','),bs=[...document.querySelectorAll('#testBox .options button')];bs.forEach((b,n)=>{if(n===a)b.classList.add('correct');else if(n===i)b.classList.add('wrong');b.disabled=true});document.getElementById('testFeedback').innerHTML='<div class="result"><h3>'+(i===a?'✓ Chính xác':'✕ Chưa đúng')+'</h3><p><b>Đáp án: '+String.fromCharCode(65+a)+'. '+o[a]+'</b></p><p>'+t[3]+'</p><button class="btn primary" onclick="nextTest()">'+(ti<tests.length-1?'Câu tiếp theo →':'Xem kết quả →')+'</button></div>'};nextTest=function(){ti++;if(ti<tests.length)test();else renderTestResult()};
 renderTestResult=function(){const s=testAnswers.reduce((n,x,i)=>n+(x===tests[i][2]?1:0),0);document.getElementById('testBox').innerHTML='<h2>Kết quả '+s+'/'+tests.length+'</h2><div class="reviewList">'+tests.map((t,n)=>{const o=t[1].split(',');return '<article class="reviewItem '+(testAnswers[n]===t[2]?'ok':'no')+'"><h3>'+t[0]+'</h3><p>Bạn chọn: '+o[testAnswers[n]]+'</p><p>Đúng: '+o[t[2]]+'</p><p>'+t[3]+'</p></article>'}).join('')+'</div>'};
 render();ti=0;testAnswers=[];test();
+
+const randomize=a=>{const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x};
+const makeChoice=(q,correct,wrong,why)=>{const o=randomize([correct,...wrong.slice(0,2)]);return{q:q,o:o,a:o.indexOf(correct),why:why}};
+let activeExercises=[];
+function lessonPool(l){
+ const w=l[5].map(x=>x.split('|')),others=randomize(lessons.filter(x=>x[0]!==l[0]).flatMap(x=>x[5].map(y=>y.split('|'))));
+ const pool=[];
+ w.forEach((v,i)=>{
+  const same=w.filter((_,n)=>n!==i);
+  pool.push(makeChoice('“'+v[0]+'” nghĩa là gì?',v[1],same.map(x=>x[1]),v[0]+' nghĩa là '+v[1]+'.'));
+  pool.push(makeChoice('Từ tiếng Anh của “'+v[1]+'” là gì?',v[0],same.map(x=>x[0]),'Đáp án đúng là '+v[0]+'.'));
+  pool.push(makeChoice('Từ nào thuộc chủ đề “'+l[3]+'”?',v[0],others.slice(i*2,i*2+2).map(x=>x[0]),v[0]+' là từ trong bài '+l[3]+'.'));
+  const typo1=v[0].length>3?v[0].slice(0,-1):v[0]+'e',typo2=v[0].length>2?v[0][0]+v[0].slice(2)+v[0][1]:v[0]+'s';
+  pool.push(makeChoice('Chọn cách viết đúng của từ “'+v[1]+'”.',v[0],[typo1,typo2],v[0]+' là cách viết đúng.'));
+ });
+ return pool;
+}
+openLesson=function(id){current=lessons.find(l=>l[0]===id);wi=0;exIndex=0;activeExercises=randomize(lessonPool(current)).slice(0,4);drawLesson();show('lesson')};
+drawLesson=function(){const w=current[5][wi].split('|'),e=activeExercises[exIndex];document.getElementById('lessonContent').innerHTML='<p class="eyebrow">'+current[1]+' · '+current[2]+'</p><h1>'+current[3]+'</h1><p class="lead">'+current[4]+'</p><div class="study"><div class="flash"><span class="eyebrow">FLASHCARD '+(wi+1)+'/4</span><div class="word"><div><strong>'+w[0]+'</strong><b>'+w[1]+'</b><p>'+w[2]+'</p></div></div><div class="controls"><button onclick="wi=(wi+3)%4;drawLesson()">←</button><button onclick="speak(&quot;'+w[0]+'&quot;)">🔊 Nghe</button><button onclick="wi=(wi+1)%4;drawLesson()">→</button></div></div><div class="note"><span class="eyebrow">GHI NHỚ</span><h2>Kiến thức trọng tâm</h2><p>'+current[6]+'</p><p><b>Ngân hàng:</b> '+lessonPool(current).length+' câu · lượt này chọn ngẫu nhiên 4 câu.</p></div></div><div class="quiz"><span class="eyebrow">LUYỆN TẬP NGẪU NHIÊN · '+(exIndex+1)+'/4</span><div class="meter"><i style="width:'+((exIndex+1)*25)+'%"></i></div><h2>'+e.q+'</h2><div class="options">'+e.o.map((x,i)=>'<button onclick="expandedAnswer(this,'+i+')">'+String.fromCharCode(65+i)+'. '+x+'</button>').join('')+'</div><div id="feedback"></div></div>'};
+window.expandedAnswer=(el,i)=>{const e=activeExercises[exIndex],bs=[...el.parentElement.children];bs.forEach((b,n)=>{if(n===e.a)b.classList.add('correct');else if(n===i)b.classList.add('wrong');b.disabled=true});document.getElementById('feedback').innerHTML='<div class="result"><h3>'+(i===e.a?'✓ Chính xác':'✕ Chưa đúng')+'</h3><p><b>Đáp án: '+String.fromCharCode(65+e.a)+'. '+e.o[e.a]+'</b></p><p>'+e.why+'</p>'+(exIndex<3?'<button class="btn primary" onclick="expandedNext()">Câu tiếp theo →</button>':'<button class="btn primary" onclick="completeAndNext()">Hoàn thành & bài tiếp theo →</button>')+' <button class="btn soft" onclick="drawLesson()">Xem lại câu này</button></div>'};
+const originalComplete=completeAndNext;completeAndNext=function(){const idx=lessons.findIndex(l=>l[0]===current[0]);saveDone();current=lessons[(idx+1)%lessons.length];wi=0;exIndex=0;activeExercises=randomize(lessonPool(current)).slice(0,4);drawLesson();scrollTo(0,0)};
+const placementBank=[...tests];
+lessons.forEach(l=>l[5].map(x=>x.split('|')).forEach((v,i,arr)=>{
+ const other=arr.filter((_,n)=>n!==i);
+ const q1=makeChoice('“'+v[0]+'” nghĩa là gì?',v[1],other.map(x=>x[1]),v[0]+' nghĩa là '+v[1]+'.');
+ placementBank.push([q1.q,q1.o.join(','),q1.a,q1.why]);
+ const q2=makeChoice('Từ tiếng Anh của “'+v[1]+'” là gì?',v[0],other.map(x=>x[0]),'Đáp án đúng là '+v[0]+'.');
+ placementBank.push([q2.q,q2.o.join(','),q2.a,q2.why]);
+}));
+const bank=randomize(placementBank).slice(0,Math.min(500,placementBank.length));
+function newPlacementTest(){tests.splice(0,tests.length,...randomize(bank).slice(0,25));ti=0;testAnswers=[];test()}
+resetTest=newPlacementTest;
+document.querySelector('#test .lead').textContent='Ngân hàng '+bank.length+' câu từ A0 đến C2; mỗi lượt chọn ngẫu nhiên 25 câu và trộn đáp án.';
+newPlacementTest();
 })();
